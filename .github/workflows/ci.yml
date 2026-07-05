@@ -78,7 +78,7 @@ jobs:
 
       - name: Test Qdrant Health
         run: |
-          curl --fail http://localhost:6333/health
+          curl --fail http://localhost:6333/
 
       - name: Show logs on failure
         if: failure()
