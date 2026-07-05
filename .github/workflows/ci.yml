@@ -40,7 +40,7 @@ jobs:
 
       - name: Build Docker Image
         run: |
-          docker build -t aiflow-cicd:latest .
+          docker build -t aiflow-cicd:${{ github.sha }} -t aiflow-cicd:latest .
 
       - name: Verify Docker Image
         run: |
