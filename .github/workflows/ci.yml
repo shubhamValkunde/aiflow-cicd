@@ -11,11 +11,11 @@ on:
 
 jobs:
   ci:
+    name: Continuous Integration
 
     runs-on: ubuntu-latest
 
     steps:
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
@@ -30,12 +30,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Show Python Version
+      - name: Verify Python Version
         run: python --version
 
-      - name: Show Installed Packages
-        run: pip list
-
       - name: Ruff Lint
-        run: |
-          ruff check .
+        run: ruff check .
+
+      - name: Run Unit Tests
+        run: pytest
