@@ -35,12 +35,31 @@ jobs:
       - name: Ruff Lint
         run: ruff check .
 
-      - name: Debug Environment
-        run: |
-          python --version
-          pip list
-          python -c "import fastapi, starlette, httpx; print('FastAPI:', fastapi.__version__); print('Starlette:', starlette.__version__); print('httpx:', httpx.__version__)"
-          python -c "import inspect, starlette.testclient; print(inspect.getsource(starlette.testclient)[:1500])"
-
       - name: Run Unit Tests
         run: pytest
+
+      - name: Build Docker Image
+        run: |
+          docker build -t aiflow-cicd:latest .
+
+      - name: Verify Docker Image
+        run: |
+          docker images
+
+      - name: Run Docker Container
+        run: |
+          docker run -d --name aiflow-container -p 8000:8000 aiflow-cicd:latest
+
+      - name: Wait for Application
+        run: |
+          sleep 10
+
+      - name: Test Container Health
+        run: |
+          curl http://localhost:8000
+
+      - name: Stop Container
+        if: always()
+        run: |
+          docker stop aiflow-container
+          docker rm aiflow-container
