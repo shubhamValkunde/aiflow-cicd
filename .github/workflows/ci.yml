@@ -45,34 +45,45 @@ jobs:
       - name: Verify Docker Image
         run: docker images
 
-      # 🧠 NEW: Full AI stack test using Docker Compose
       - name: Start Full AI Stack (Compose)
         run: |
           docker compose up -d --build
 
-      - name: Wait for Services
+      - name: Wait for API to be ready
         run: |
-          sleep 20
+          for i in {1..15}; do
+            curl --fail http://localhost:8000 && exit 0
+            echo "Waiting for API..."
+            sleep 3
+          done
+          exit 1
 
-      # API Health Check
       - name: Test API Health
         run: |
-          curl http://localhost:8000
+          curl --fail http://localhost:8000
 
-      # Redis Check (basic connectivity)
+      - name: Test Chat Endpoint
+        run: |
+          curl --fail -X POST "http://localhost:8000/chat" \
+            -H "Content-Type: application/json" \
+            -d '{"message":"hello"}'
+
       - name: Test Redis Connection
         run: |
-          docker exec $(docker ps -q --filter "name=redis") redis-cli ping
+          docker exec aiflow-redis redis-cli ping
 
-      # Postgres Check
       - name: Test Postgres Connection
         run: |
-          docker exec $(docker ps -q --filter "name=postgres") pg_isready
+          docker exec aiflow-postgres pg_isready
 
-      # Qdrant Check
       - name: Test Qdrant Health
         run: |
-          curl http://localhost:6333/health
+          curl --fail http://localhost:6333/health
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          docker compose logs
 
       - name: Stop All Services
         if: always()
