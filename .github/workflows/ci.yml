@@ -38,28 +38,43 @@ jobs:
       - name: Run Unit Tests
         run: pytest
 
-      - name: Build Docker Image
+          - name: Build Docker Image
         run: |
           docker build -t aiflow-cicd:${{ github.sha }} -t aiflow-cicd:latest .
 
       - name: Verify Docker Image
-        run: |
-          docker images
+        run: docker images
 
-      - name: Run Docker Container
+      # 🧠 NEW: Full AI stack test using Docker Compose
+      - name: Start Full AI Stack (Compose)
         run: |
-          docker run -d --name aiflow-container -p 8000:8000 aiflow-cicd:latest
+          docker compose up -d --build
 
-      - name: Wait for Application
+      - name: Wait for Services
         run: |
-          sleep 10
+          sleep 20
 
-      - name: Test Container Health
+      # API Health Check
+      - name: Test API Health
         run: |
           curl http://localhost:8000
 
-      - name: Stop Container
+      # Redis Check (basic connectivity)
+      - name: Test Redis Connection
+        run: |
+          docker exec $(docker ps -q --filter "name=redis") redis-cli ping
+
+      # Postgres Check
+      - name: Test Postgres Connection
+        run: |
+          docker exec $(docker ps -q --filter "name=postgres") pg_isready
+
+      # Qdrant Check
+      - name: Test Qdrant Health
+        run: |
+          curl http://localhost:6333/health
+
+      - name: Stop All Services
         if: always()
         run: |
-          docker stop aiflow-container
-          docker rm aiflow-container
+          docker compose down
